@@ -9,44 +9,43 @@
 <body>
 
     <div class="container">
-        <h1>Trình Tạo Mã Vạch (Barcode)</h1>
+        <h1>Trình Tạo Mã Vạch</h1>
 
-        <div id="scanner-container">
-            <div id="qr-reader" style="width: 100%;"></div>
-            <button id="stop-scan-btn" style="display: none;">Dừng Quét</button>
+        <div id="scanner-container" style="display: none;">
+            <div id="qr-reader"></div>
+            <button id="stop-scan-btn">Dừng Quét</button>
         </div>
 
         <div class="input-group">
-            <label for="barcode-input">Nhập mã vạch (hoặc quét bằng camera):</label>
-            <input type="text" id="barcode-input" placeholder="Ví dụ: 123456789012">
+            <label for="barcode-input">Mã vạch:</label>
+            <input type="text" id="barcode-input" placeholder="Nhập mã vạch hoặc nhấn nút quét">
         </div>
-
         <div class="input-group">
             <label for="name-input">Tên sản phẩm:</label>
             <input type="text" id="name-input" placeholder="Ví dụ: Nước ngọt Pepsi">
         </div>
-
         <div class="input-group">
             <label for="price-input">Giá bán:</label>
             <input type="text" id="price-input" placeholder="Ví dụ: 10.000đ">
         </div>
 
         <div class="button-group">
-            <button id="generate-btn">Tạo Mã Vạch</button>
+            <button id="generate-btn">Thêm vào danh sách</button>
+            <button id="scan-btn">📷 Quét Barcode</button>
             <button id="export-pdf-btn">Xuất PDF</button>
-            <label for="file-input" class="file-label">Đính kèm tệp (CSV)</label>
+            <label for="file-input" class="file-label">Nhập từ tệp</label>
             <input type="file" id="file-input" accept=".csv" style="display: none;">
         </div>
 
         <hr>
-        <h2>Kết quả</h2>
+        <h2>Danh sách mã vạch</h2>
         <div id="result-container">
             </div>
-
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script src="script.js"></script>
 
