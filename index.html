@@ -3,19 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trình tạo Barcode</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Trình tạo Barcode (Phiên bản sửa lỗi)</title>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            padding: 20px 0;
+            line-height: 1.6;
+        }
+        .container {
+            background: white;
+            padding: 25px 40px;
+            border-radius: 12px;
+            box-shadow: 0 6px A20px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 700px;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        h2 {
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            margin-top: 30px;
+        }
+        .input-group { margin-bottom: 15px; }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+        button, .file-label {
+            padding: 12px 22px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        button:hover, .file-label:hover { transform: translateY(-2px); }
+        #generate-btn { background-color: #007bff; }
+        #scan-btn { background-color: #6c757d; }
+        #export-pdf-btn { background-color: #28a745; }
+        .file-label { background-color: #ffc107; color: #333; }
+        #scanner-container {
+            margin: 20px 0;
+            padding: 10px;
+            border: 2px dashed #007bff;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+        #qr-reader {
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        #stop-scan-btn {
+            width: 100%;
+            margin-top: 10px;
+            background-color: #dc3545;
+        }
+        #result-container {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .barcode-item {
+            text-align: center;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .barcode-item .product-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0 0 5px 0;
+        }
+        .barcode-item .product-price {
+            font-size: 16px;
+            color: #dc3545;
+            margin: 0 0 10px 0;
+        }
+        .barcode-item svg { max-width: 100%; }
+        @media (max-width: 600px) {
+            #result-container { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
 
     <div class="container">
         <h1>Trình Tạo Mã Vạch</h1>
-
         <div id="scanner-container" style="display: none;">
             <div id="qr-reader"></div>
             <button id="stop-scan-btn">Dừng Quét</button>
         </div>
-
         <div class="input-group">
             <label for="barcode-input">Mã vạch:</label>
             <input type="text" id="barcode-input" placeholder="Nhập mã vạch hoặc nhấn nút quét">
@@ -28,7 +139,6 @@
             <label for="price-input">Giá bán:</label>
             <input type="text" id="price-input" placeholder="Ví dụ: 10.000đ">
         </div>
-
         <div class="button-group">
             <button id="generate-btn">Thêm vào danh sách</button>
             <button id="scan-btn">📷 Quét Barcode</button>
@@ -36,18 +146,166 @@
             <label for="file-input" class="file-label">Nhập từ tệp</label>
             <input type="file" id="file-input" accept=".csv" style="display: none;">
         </div>
-
         <hr>
         <h2>Danh sách mã vạch</h2>
-        <div id="result-container">
-            </div>
+        <div id="result-container"></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <script src="script.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Lấy các phần tử
+            const barcodeInput = document.getElementById('barcode-input');
+            const nameInput = document.getElementById('name-input');
+            const priceInput = document.getElementById('price-input');
+            const generateBtn = document.getElementById('generate-btn');
+            const scanBtn = document.getElementById('scan-btn');
+            const stopScanBtn = document.getElementById('stop-scan-btn');
+            const exportPdfBtn = document.getElementById('export-pdf-btn');
+            const fileInput = document.getElementById('file-input');
+            const resultContainer = document.getElementById('result-container');
+            const scannerContainer = document.getElementById('scanner-container');
+
+            let html5QrCode;
+
+            function onScanSuccess(decodedText, decodedResult) {
+                barcodeInput.value = decodedText;
+                stopScanning();
+            }
+
+            function onScanError(errorMessage) { /* Bỏ qua */ }
+
+            function startScanning() {
+                scannerContainer.style.display = 'block';
+                if (!html5QrCode) {
+                    html5QrCode = new Html5Qrcode("qr-reader");
+                }
+                html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, onScanSuccess, onScanError)
+                    .catch(err => alert("Không thể khởi động camera. Vui lòng cấp quyền truy cập."));
+            }
+
+            function stopScanning() {
+                if (html5QrCode && html5QrCode.isScanning) {
+                    html5QrCode.stop().then(() => { scannerContainer.style.display = 'none'; });
+                }
+            }
+
+            scanBtn.addEventListener('click', startScanning);
+            stopScanBtn.addEventListener('click', stopScanning);
+
+            function createBarcode(code, name, price) {
+                if (!code) {
+                    alert('Vui lòng nhập mã vạch!');
+                    return;
+                }
+                const itemDiv = document.createElement('div');
+                itemDiv.classList.add('barcode-item');
+
+                if (name) {
+                    const nameP = document.createElement('p');
+                    nameP.className = 'product-name';
+                    nameP.textContent = name;
+                    itemDiv.appendChild(nameP);
+                }
+                if (price) {
+                    const priceP = document.createElement('p');
+                    priceP.className = 'product-price';
+                    priceP.textContent = `Giá: ${price}`;
+                    itemDiv.appendChild(priceP);
+                }
+                
+                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svg.id = `barcode-${Date.now()}`;
+                itemDiv.appendChild(svg);
+                resultContainer.appendChild(itemDiv);
+
+                try {
+                    JsBarcode(`#${svg.id}`, code, {
+                        format: "CODE128", width: 2, height: 60, displayValue: true
+                    });
+                } catch (e) {
+                    alert('Mã vạch không hợp lệ. Vui lòng kiểm tra lại!');
+                    itemDiv.remove();
+                }
+            }
+
+            generateBtn.addEventListener('click', () => {
+                createBarcode(barcodeInput.value, nameInput.value, priceInput.value);
+                barcodeInput.value = '';
+                nameInput.value = '';
+                priceInput.value = '';
+            });
+
+            // === PHIÊN BẢN SỬA LỖI PDF NÂNG CAO ===
+            exportPdfBtn.addEventListener('click', async () => {
+                const barcodes = resultContainer.querySelectorAll('.barcode-item');
+                if (barcodes.length === 0) {
+                    alert('Chưa có mã vạch nào để xuất!');
+                    return;
+                }
+
+                console.log("Bắt đầu quá trình xuất PDF...");
+                alert("Đang chuẩn bị xuất PDF, quá trình có thể mất vài giây...");
+
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF('p', 'mm', 'a4');
+                    const pageHeight = doc.internal.pageSize.getHeight();
+                    const margin = 10;
+                    let y = margin;
+
+                    for (let i = 0; i < barcodes.length; i++) {
+                        const item = barcodes[i];
+                        console.log(`Đang xử lý item thứ ${i + 1}...`);
+                        
+                        // Thêm tùy chọn allowTaint và useCORS để xử lý lỗi bảo mật canvas
+                        const canvas = await html2canvas(item, { 
+                            scale: 3, 
+                            useCORS: true 
+                        });
+                        console.log(`Item ${i + 1} đã được chuyển thành canvas.`);
+
+                        const imgData = canvas.toDataURL('image/png');
+                        const imgWidth = 80;
+                        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                        if (y + imgHeight + margin > pageHeight) {
+                            doc.addPage();
+                            y = margin;
+                        }
+
+                        doc.addImage(imgData, 'PNG', margin, y, imgWidth, imgHeight);
+                        y += imgHeight + 10;
+                    }
+                    
+                    console.log("Đang lưu file PDF...");
+                    doc.save('danh-sach-barcode.pdf');
+                    console.log("Xuất PDF thành công!");
+                } catch (error) {
+                    console.error("ĐÃ XẢY RA LỖI NGHIÊM TRỌNG KHI XUẤT PDF:", error);
+                    alert("Đã có lỗi xảy ra khi xuất PDF. Vui lòng kiểm tra Console (nhấn F12) để xem chi tiết.");
+                }
+            });
+
+            fileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const rows = e.target.result.split('\n').filter(row => row.trim() !== '');
+                    rows.forEach(row => {
+                        const [code, name, price] = row.split(',').map(s => s.trim());
+                        if (code) createBarcode(code, name, price);
+                    });
+                };
+                reader.readAsText(file);
+            });
+        });
+    </script>
 
 </body>
 </html>
